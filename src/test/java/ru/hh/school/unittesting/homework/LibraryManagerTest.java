@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,12 +27,11 @@ public class LibraryManagerTest {
   @InjectMocks
   private LibraryManager libraryManager;
 
-  @Test
-  void testBooksAdding() {
+  @BeforeEach
+  void setUp() {
+    when(userService.isUserActive("1")).thenReturn(true);
     libraryManager.addBook("1", 3);
-
-    assertEquals(3, libraryManager.getAvailableCopies("1"));
-    assertEquals(0, libraryManager.getAvailableCopies("0"));
+    libraryManager.borrowBook("1", "1");
   }
 
   @Test
@@ -46,31 +46,22 @@ public class LibraryManagerTest {
 
   @Test
   void testUnavailableBookBorrowing() {
-    when(userService.isUserActive("1")).thenReturn(true);
-
-    boolean bookBorrowResult = libraryManager.borrowBook("1", "1");
+    boolean bookBorrowResult = libraryManager.borrowBook("0", "1");
 
     assertFalse(bookBorrowResult);
   }
 
   @Test
   void testSuccessfulBookBorrowing() {
-    when(userService.isUserActive("1")).thenReturn(true);
-    libraryManager.addBook("1", 3);
-
     boolean bookBorrowResult = libraryManager.borrowBook("1", "1");
 
-    verify(notificationService, times(1)).notifyUser("1", "You have borrowed the book: 1");
-    assertEquals(2, libraryManager.getAvailableCopies("1"));
+    verify(notificationService, times(2)).notifyUser("1", "You have borrowed the book: 1");
+    assertEquals(1, libraryManager.getAvailableCopies("1"));
     assertTrue(bookBorrowResult);
   }
 
   @Test
   void testUnsuccessfulBookReturning() {
-    when(userService.isUserActive("1")).thenReturn(true);
-    libraryManager.addBook("1", 3);
-    libraryManager.borrowBook("1", "1");
-
     boolean nonExistentBookReturnResult = libraryManager.returnBook("0", "1");
     boolean wrongUserBookReturnResult = libraryManager.returnBook("1", "0");
 
@@ -80,10 +71,6 @@ public class LibraryManagerTest {
 
   @Test
   void testSuccessfulBookReturning() {
-    when(userService.isUserActive("1")).thenReturn(true);
-    libraryManager.addBook("1", 3);
-    libraryManager.borrowBook("1", "1");
-
     boolean bookReturnResult = libraryManager.returnBook("1", "1");
 
     assertEquals(3, libraryManager.getAvailableCopies("1"));
