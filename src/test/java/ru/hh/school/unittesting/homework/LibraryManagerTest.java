@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class LibraryManagerTest {
+class LibraryManagerTest {
   @Mock
   private NotificationService notificationService;
 
@@ -60,13 +60,12 @@ public class LibraryManagerTest {
     assertTrue(bookBorrowResult);
   }
 
-  @Test
-  void testUnsuccessfulBookReturning() {
-    boolean nonExistentBookReturnResult = libraryManager.returnBook("0", "1");
-    boolean wrongUserBookReturnResult = libraryManager.returnBook("1", "0");
+  @ParameterizedTest
+  @CsvSource({"0, 1", "1, 0"})
+  void testUnsuccessfulBookReturning(String bookId, String userId) {
+    boolean bookReturnResult = libraryManager.returnBook(bookId, userId);
 
-    assertFalse(nonExistentBookReturnResult);
-    assertFalse(wrongUserBookReturnResult);
+    assertFalse(bookReturnResult);
   }
 
   @Test
@@ -90,6 +89,7 @@ public class LibraryManagerTest {
 
   @ParameterizedTest
   @CsvSource({
+      "0, false, false, 0",
       "10, false, false, 5.0",
       "20, true, false, 15.0",
       "30, true, false, 22.5",
